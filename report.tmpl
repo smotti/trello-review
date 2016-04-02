@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+  "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+<body>
+  <h1>Weekly status review</h1>
+  <h2>Table of Contents</h2>
+  <ol>
+  <!-- TMPL_LOOP toc-entries -->
+    <li><a href="#<!-- TMPL_VAR board -->"><!-- TMPL_VAR board --></a></li>
+  <!-- /TMPL_LOOP -->
+  </ol>
+
+  <h2>Projects</h2>
+  <!-- TMPL_LOOP boards -->
+    <h3><!-- TMPL_VAR name --></h3>
+    <!-- TMPL_LOOP cards -->
+      <h4><!-- TMPL_VAR name --></h4>
+      <p>
+	<b>Description:</b> <!-- TMPL_VAR desc -->
+      </p>
+      <p>
+	<b>Status:</b> <!-- TMPL_VAR status -->
+      </p>
+      <!-- TMPL_IF show-comments -->
+      <p>
+	<b>Comments:<b><br>
+	<!-- TMPL_LOOP comments -->
+	  <p>
+	    <!-- TMPL_VAR text -->
+	  <p>
+	<!-- /TMPL_LOOP -->
+      <p>
+      <!-- /TMPL_IF -->
+    <!-- /TMPL_LOOP -->
+  <!-- /TMPL_LOOP -->
+</body>
+</html>
