@@ -11,28 +11,31 @@
   <!-- /TMPL_LOOP -->
   </ol>
 
+  <hr>
+
   <h2>Projects</h2>
   <!-- TMPL_LOOP boards -->
     <h3><!-- TMPL_VAR name --></h3>
-    <!-- TMPL_LOOP cards -->
-      <h4><!-- TMPL_VAR name --></h4>
-      <p>
-	<b>Description:</b> <!-- TMPL_VAR desc -->
-      </p>
-      <p>
-	<b>Status:</b> <!-- TMPL_VAR status -->
-      </p>
-      <!-- TMPL_IF show-comments -->
-      <p>
-	<b>Comments:<b><br>
-	<!-- TMPL_LOOP comments -->
-	  <p>
-	    <!-- TMPL_VAR text -->
-	  <p>
-	<!-- /TMPL_LOOP -->
-      <p>
-      <!-- /TMPL_IF -->
+    <!-- TMPL_LOOP statuses -->
+      <h4><!-- TMPL_VAR status --></h4>
+      <!-- TMPL_LOOP cards -->
+        <b><!-- TMPL_VAR name --></b>
+        <p>
+	       <i>Description:</i> <!-- TMPL_VAR desc -->
+        </p>
+        <!-- TMPL_IF show-comments -->
+        <p>
+	        <i>Comments:</i><br>
+	        <!-- TMPL_LOOP comments -->
+	          <p>
+	            <!-- TMPL_VAR date --> by <!-- TMPL_VAR author -->: <!-- TMPL_VAR text -->
+	          </p>
+	        <!-- /TMPL_LOOP -->
+        </p>
+        <!-- /TMPL_IF -->
+      <!-- /TMPL_LOOP -->
     <!-- /TMPL_LOOP -->
+    <hr>
   <!-- /TMPL_LOOP -->
 </body>
 </html>

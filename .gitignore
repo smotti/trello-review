@@ -1,2 +1,3 @@
 *.fasl
 .*.sw*
+report.html
