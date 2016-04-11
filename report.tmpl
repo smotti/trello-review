@@ -6,7 +6,7 @@
   <h1>Weekly status review</h1>
   <h2>Table of Contents</h2>
   <ol>
-  <!-- TMPL_LOOP toc-entries -->
+  <!-- TMPL_LOOP toc -->
     <li><a href="#<!-- TMPL_VAR board -->"><!-- TMPL_VAR board --></a></li>
   <!-- /TMPL_LOOP -->
   </ol>
@@ -16,8 +16,8 @@
   <h2>Projects</h2>
   <!-- TMPL_LOOP boards -->
     <h3><!-- TMPL_VAR name --></h3>
-    <!-- TMPL_LOOP statuses -->
-      <h4><!-- TMPL_VAR status --></h4>
+    <!-- TMPL_LOOP lists -->
+      <h4><!-- TMPL_VAR list --></h4>
       <!-- TMPL_LOOP cards -->
         <b><!-- TMPL_VAR name --></b>
         <p>

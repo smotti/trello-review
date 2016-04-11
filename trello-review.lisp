@@ -16,43 +16,64 @@
 
 (defvar *lists* '("Backlog" "Pending" "Ongoing" "Testing" "Done"))
 
-(defun get-user-boards ()
+(defun get-boards ()
   "Request a list of boards the user is a member of. Returns a list of hashmaps."
-  (yason:parse
-    (flexi-streams:octets-to-string
-      (drakma:http-request (format nil
-                                   "~a/members/me/boards?fields=name&lists=open&~a"
-                                   *api-url* *auth-params*)))))
+  (flexi-streams:octets-to-string
+    (drakma:http-request (format nil
+                                 "~a/members/me/boards?fields=name&lists=open&~a"
+                                 *api-url* *auth-params*))))
+
+(defun object-key-fn (key)
+  "Key fn for yason:parse to turn keys into keywords."
+  (values (intern (string-upcase key) "KEYWORD")))
+
+(defun parse-boards (boards)
+  (yason:parse boards :object-key-fn #'object-key-fn :object-as :plist))
+
+;TODO: How to non-destructevily filter lists of a board and return a list of
+;the boards with their lists filtered.
+(defun filter-lists (boards by)
+  "Filter out the lists specified by the user."
+  (labels ((iter (old new)
+             (if (not (null old))
+               (let ((board (concatenate
+                              'list
+                              (first old)
+                              (remove-if-not #'(lambda (entry)
+                                                 (find (getf entry :name) by :test #'equalp))
+                                             (getf board :lists)))))
+                 (iter (rest old) (append new board)))
+               new)))
+    (iter boards ())))
+
+(filter-lists *parsed* *lists*)
 
 (defun filter-boards (boards by)
   "Filter out the boards specified by the user."
   (reduce #'(lambda (result board)
-              (if (find (gethash "name" board) by :test #'equalp)
+              (if (find (getf board :name) by :test #'equalp)
                 (append result (list board))
                 result))
           boards
           :initial-value ()))
 
-(defun board-list-to-hashtable (boards)
-  (let ((ht (make-hash-table :test #'equalp)))
-    (dolist (b boards)
-      (let ((id (gethash "id" b))
-            (lists (gethash "lists" b)))
-        (setf (gethash "lists" b :test #'equalp) (lists-to-hashtable lists))
-        (setf (gethash id ht) b)))
-    ht))
+(defun toc-entries (boards)
+  "Build a list of ToC entries"
+  (labels ((build (c r n)
+             (if (not (null c))
+               (build
+                 (first r)
+                 (rest r)
+                 (append n (list (list :board (getf c :name)))))
+               n)))
+    (build (first boards) (rest boards) '())))
 
-(defun lists-to-hashtable (board-lists)
-  "Transform the board-lists list into a hashmap where the key is the id of
-   a list of the board."
-  ; See here -> http://cl-cookbook.sourceforge.net/hashes.html on how to
-  ; iterate through hash-tables. The with-hash-table-iterator macro looks
-  ; promising
-  (let ((ht (make-hash-table :test #'equalp)))
-    (dolist (l board-lists)
-      (let ((id (gethash "id" l)))
-        (setf (gethash id ht) l)))))
+(toc-entries (filter-boards *parsed* *boards*))
 
+(let* ((boards (filter-boards *parsed* *boards*))
+       (toc (toc-entries boards)))
+  (html-template:fill-and-print-template #p"./report.tmpl" (list :toc toc
+                                                                 :boards boards)))
 
 (let (toc-entries
       boards
@@ -60,7 +81,7 @@
   (dotimes (i 5)
     (push (list :board (format nil "board-~a" i)) toc-entries)
     (push (list :name (format nil "board-~a" i)
-                :statuses (list (list :status "Ongoing")
+                :lists (list (list :list "Ongoing")
                                 (list :cards (loop for y from 1 to 3
                                                    collecting (list :name (format nil "card-~a" y)
                                                                     :desc (format nil "This is card-~a" y)
