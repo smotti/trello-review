@@ -1,5 +1,3 @@
-;;;; package.lisp
-
 (defpackage #:trello-review
-  (:use #:cl))
-
+  (:use #:cl)
+  (:export :main))

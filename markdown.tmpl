@@ -1,0 +1,35 @@
+# Weekly status report
+
+---
+
+# Projects
+<!-- TMPL_LOOP boards -->
+
+## <!-- TMPL_VAR name -->
+
+<!-- TMPL_LOOP lists -->
+### <!-- TMPL_VAR name -->
+
+<!-- TMPL_LOOP cards -->
+
+**<!-- TMPL_VAR name -->**
+
+*Description*
+
+<!-- TMPL_VAR desc -->
+
+<!-- TMPL_IF show-comments -->
+*Comments*
+
+<!-- TMPL_LOOP comments -->
+<!-- TMPL_VAR date --> by <!-- TMPL_VAR author -->: <!-- TMPL_VAR text -->
+<!-- /TMPL_LOOP -->
+<!-- /TMPL_IF -->
+
+<!-- /TMPL_LOOP -->
+
+<!-- /TMPL_LOOP -->
+
+---
+
+<!-- /TMPL_LOOP -->
