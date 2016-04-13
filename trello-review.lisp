@@ -1,10 +1,10 @@
 (in-package #:trello-review)
 
-(defvar *boards* '("Docking Server" "Backend - Identity & Access Context"))
-
-(defvar *lists* '("Backlog" "Pending" "Ongoing" "Testing" "Done"))
-
 ;;; "trello-review" goes here. Hacks and glory await!
+
+(defvar *boards*)
+
+(defvar *lists*)
 
 (defparameter *token* "")
 
@@ -15,6 +15,12 @@
 (defparameter *api-url* "https://api.trello.com/1")
 
 (defparameter *show-comments* nil)
+
+(defparameter *output* #p"./review.md")
+
+(defparameter *config-path* #p"./config.lisp")
+
+(defparameter *template* #p"./report.tmpl")
 
 (defun read-config (path)
   (with-open-file (file path :direction :input)
@@ -59,9 +65,10 @@
   "Key fn for yason:parse to turn keys into keywords."
   (values (intern (string-upcase key) "KEYWORD")))
 
-(defun parse-request-body (body)
+(defun parse-response-body (body)
   (yason:parse body :object-key-fn #'object-key-fn :object-as :plist))
 
+; REVIEW: This can be simplified via reduce or even map
 (defun filter-lists (boards by)
   "Filter out the lists specified by the user."
   (labels ((remove-list-entry (entry) (find (getf entry :name)
@@ -97,7 +104,7 @@
 (defun add-list-cards (board-list user-id)
   (labels ((member-p (card) (find user-id (getf card :idmembers) :test #'equalp)))
     (let ((cards (remove-if-not #'member-p
-                                (parse-request-body
+                                (parse-response-body
                                   (get-list-cards (getf board-list :id))))))
       (concatenate 'list board-list (list :cards cards)))))
 
@@ -131,8 +138,12 @@
 ; TODO: Add card comments to cards if requested.
 (defun create-report (template output)
   (let* ((boards (add-cards
-                   (filter-lists (filter-boards *parsed* *boards*) *lists*)
-                   (getf (parse-request-body (get-user-id)) :id)))
+                   ; REVIEW: For the filtering of lists we could use a cl map
+                   ; function.
+                   (filter-lists (filter-boards (parse-response-body (get-boards))
+                                                *boards*)
+                                 *lists*)
+                   (getf (parse-response-body (get-user-id)) :id)))
          (toc (toc-entries boards)))
     (with-open-file (report output :direction :output :if-exists :supersede)
       (html-template:fill-and-print-template template
@@ -140,8 +151,57 @@
                                                    :boards boards)
                                              :stream report))))
 
+(defun parse-argv (argv)
+  (labels ((option-p (opt)
+             (string= opt "-" :end1 1))
+           (arg-p (opt)
+             (if (member opt argv :test #'equalp)
+               T
+               NIL))
+           (value (opt)
+             (second (member opt argv :test #'equalp))))
+    (list
+      #'arg-p
+      #'value)))
+
+; http://www.cliki.net/Portable%20Exit
+(defun quit (&optional code)
+  #+clisp (#+lisp=cl ext:quit #-lisp=cl lisp:quit code)
+  #+cmu (ext:quit code)
+  #+sbcl (sb-ext:exit :code code)
+  #+abcl (cl-user::quit)
+  #+ecl (si:quit)
+  #-(or clisp cmu sbcl abcl ecl)
+  (error 'not-implemented :proc (list 'quit code)))
+
+; TODO: Call markdown2 directly
 (defun main (argv)
-  (print argv))
+  ; Parse command line arguments
+  (destructuring-bind (arg-p opt-value) (parse-argv argv)
+    ; Check if required options have been specified
+    (when (or (not (funcall arg-p "-lists"))
+              (not (funcall arg-p "-boards")))
+      (format t "No boards or lists specified~%")
+      (quit 1))
+
+    ; Set config parameters for lists and boards
+    (setf *boards* (split-sequence #\, (funcall opt-value "-boards")))
+    (setf *lists* (split-sequence #\, (funcall opt-value "-lists")))
+
+    (let ((output (funcall opt-value "-output")))
+      (when output (setf *output* (merge-pathnames output))))
+
+    (let ((tmpl (funcall opt-value "-template")))
+      (when tmpl (setf *template* (merge-pathnames tmpl))))
+    
+    ; Read config file and init config parameters
+    (let ((config-path (funcall opt-value "-config")))
+      (if config-path
+        (init-config-params (read-config (merge-pathnames config-path)))
+        (init-config-params (read-config *config-path*)))))
+
+  ; Create the report
+  (create-report *template* *output*))
 
 ;(let (toc-entries
 ;      boards

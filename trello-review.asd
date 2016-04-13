@@ -5,7 +5,8 @@
   :depends-on (#:drakma
                #:yason
                #:html-template
-               #:flexi-streams)
+               #:flexi-streams
+               #:split-sequence)
   :serial t
   :components ((:file "package")
                (:file "trello-review")))
