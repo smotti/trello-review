@@ -15,7 +15,7 @@ cd ~/quicklisp/local-projects/
 git clone <url>/trello-review.git
 ```
 
-Authorize the app by navigating to the following url:
+Login to trello and authorize the app by navigating to the following url:
 
 ```
 https://trello.com/1/authorize?callback_method=postMessage&scope=read&expiration=never&name=trello-review&key=2e8178984273f4bf22ac309c3f36f9b6
